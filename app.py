@@ -90,7 +90,7 @@ def get():
         return jsonify({"code": 404, "msg": "not found"}), 404
 
     filename = item["digest"] + "." + item["extname"]
-    with Image.open(filename) as image:
+    with Image.open(download_path + "/" + filename) as image:
         _format = image.format
         mime_type = image.get_format_mimetype()
         size_x, size_y = image.size
