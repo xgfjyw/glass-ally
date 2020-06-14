@@ -1,13 +1,18 @@
-from peewee import Model
-from peewee import CharField, AutoField, DateTimeField, IntegerField, TextField
-from peewee import DoesNotExist
 import datetime
+
+from peewee import AutoField
+from peewee import CharField
+from peewee import DateTimeField
+from peewee import DoesNotExist
+from peewee import IntegerField
+from peewee import Model
+from peewee import TextField
 from playhouse.db_url import connect
 
 import config
 
-
 db = connect(config.db_dsn)
+
 
 class SearchHistory(Model):
     id = AutoField(primary_key=True)
@@ -31,18 +36,13 @@ class SearchHistory(Model):
     @classmethod
     def query(cls, keyword):
         q = cls.select().where(cls.keyword == keyword)
-        return [{
-            "id": i.id,
-            "start": i.start,
-            "end": i.end,
-            "result": i.result,
-            "create_at": i.create_at
-        } for i in q]
+        return [{"id": i.id, "start": i.start, "end": i.end, "result": i.result, "create_at": i.create_at} for i in q]
+
 
 class Resources(Model):
     id = AutoField(primary_key=True)
     url = CharField(max_length=512)
-    digest = CharField(max_length=128, default="") #, unique=True)
+    digest = CharField(max_length=128, default="")  # , unique=True)
     path = CharField(max_length=256, default="")
     search_id = IntegerField(default=0)
     used = IntegerField(default=0)
@@ -63,15 +63,11 @@ class Resources(Model):
         searches = SearchHistory.query(keyword)
         search_ids = [i["id"] for i in searches]
         q = cls.select().where(cls.search_id.in_(search_ids))
-        return [{
-            "url": i.url,
-            "path": i.path,
-            "used": i.used,
-            "create_at": i.create_at
-        } for i in q]
+        return [{"url": i.url, "path": i.path, "used": i.used, "create_at": i.create_at} for i in q]
 
     @classmethod
     def incr_use(cls, url):
-        cls.update({cls.used: cls.used+1}).where(cls.url == url).execute()
+        cls.update({cls.used: cls.used + 1}).where(cls.url == url).execute()
+
 
 db.create_tables([SearchHistory, Resources])
