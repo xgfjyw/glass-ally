@@ -38,10 +38,10 @@ def query():
     pics = Resources.query_by_keyword(keyword)
     n = len(pics)
     if n > 0:
-        i = random.randint(0, n - 1)
-        pic = pics[i]
+        # i = random.randint(0, n - 1)
+        # pic = pics[i]
         # Resources.incr_use(pic["url"])
-        return jsonify({"code": 0, "msg": [pic["url"]]})
+        return jsonify({"code": 0, "msg": [i["digest"] for i in pics]})
 
     # search request
     url = "https://www.googleapis.com/customsearch/v1"
@@ -70,7 +70,7 @@ def query():
             continue
         s = filename.split(".")
         Resources.add(url, s[0], s[1], search_id)
-        pic_md5s.append(filename.split)
+        pic_md5s.append(s[0])
 
     return jsonify({"code": 0, "msg": pic_md5s})
 
