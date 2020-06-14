@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import io
 import json
+import logging
 import mimetypes
 import os
 import random
@@ -140,4 +141,5 @@ def not_found(error):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=config.port, debug=True)
+    logging.basicConfig(filename="error.log", level=logging.DEBUG)
+    app.run(host="0.0.0.0", port=config.port, debug=False)
