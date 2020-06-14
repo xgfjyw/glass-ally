@@ -72,7 +72,7 @@ def query():
         Resources.add(url, s[0], s[1], search_id)
         pic_md5s.append(filename.split)
 
-    return jsonify({"code": 0, "msg": [items[0]["link"]]})
+    return jsonify({"code": 0, "msg": pic_md5s})
 
 
 @app.route("/pic", methods=["GET", "POST"])
@@ -141,5 +141,5 @@ def not_found(error):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(filename="error.log", level=logging.DEBUG)
+    logging.basicConfig(filename="error.log", level=logging.INFO)
     app.run(host="0.0.0.0", port=config.port, debug=False)
