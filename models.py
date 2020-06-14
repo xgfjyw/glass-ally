@@ -70,7 +70,7 @@ class Resources(Model):
 
     @classmethod
     def query_by_digest(cls, digest):
-        item = SearchHistory.get_or_none(cls.digest == digest)
+        item = cls.get_or_none(cls.digest == digest)
         if item is None:
             return item
         return {
