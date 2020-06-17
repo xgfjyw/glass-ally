@@ -1,4 +1,4 @@
-key: AIzaSyDnGxV_UXnYIp3MM262J4YARWhnavqfCek
-cx: 000322891365072032964:tp4hlbo0thi
+key: google_api_key
+cx: custom_search_engine
 
-db_dsn: mysql://root:123321Aa@tcp(106.12.92.216:7999)/abc
+db_dsn: mysql://user:pass@(ip:port)/db_name
