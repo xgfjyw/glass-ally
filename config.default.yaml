@@ -2,3 +2,4 @@ key: google_api_key
 cx: custom_search_engine
 
 db_dsn: mysql://user:pass@(ip:port)/db_name
+listen: 127.0.0.1:8080

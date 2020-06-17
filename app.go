@@ -30,9 +30,10 @@ var (
 )
 
 type Config struct {
-	Key string `yaml:"key"`
-	Cx  string `yaml:"cx"`
-	Dsn string `yaml:"db_dsn"`
+	Key  string `yaml:"key"`
+	Cx   string `yaml:"cx"`
+	Dsn  string `yaml:"db_dsn"`
+	Addr string `yaml:"listen"`
 }
 
 type SearchHistory struct {
@@ -295,6 +296,10 @@ func main() {
 	config := initConfig()
 	cx = config.Cx
 	key = config.Key
+	listenAddr := "127.0.0.1:8081"
+	if config.Addr != "" {
+		listenAddr = config.Addr
+	}
 
 	dsn := config.Dsn + "?parseTime=true"
 	s := strings.Split(dsn, "://")
@@ -311,5 +316,5 @@ func main() {
 	r := gin.Default()
 	r.POST("/s", query)
 	r.GET("/pic", getPicture)
-	r.Run("127.0.0.1:8081")
+	r.Run(listenAddr)
 }
