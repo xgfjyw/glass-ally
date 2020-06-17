@@ -108,6 +108,15 @@ func main() {
 	}
 	db = conn
 	defer db.Close()
+	if !db.HasTable(&Path{}) {
+		db.CreateTable(&Path{})
+	}
+	if !db.HasTable(&Resources{}) {
+		db.CreateTable(&Resources{})
+	}
+	if !db.HasTable(&ResourceProperty{}) {
+		db.CreateTable(&ResourceProperty{})
+	}
 	db.AutoMigrate(&Path{}, &Resources{}, &ResourceProperty{})
 
 	reloadData()
