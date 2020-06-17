@@ -42,8 +42,8 @@ class SearchHistory(Model):
 class Resources(Model):
     id = AutoField(primary_key=True)
     url = CharField(max_length=512)
-    digest = CharField(max_length=128, default="")  # , unique=True)
-    path = CharField(max_length=256, default="")
+    digest = CharField(max_length=128, unique=True)
+    extname = CharField(max_length=16, default="")
     search_id = IntegerField(default=0)
     used = IntegerField(default=0)
     create_at = DateTimeField(default=datetime.datetime.now)
@@ -52,18 +52,34 @@ class Resources(Model):
         database = db
 
     @classmethod
-    def add(cls, url, path, search_id):
+    def add(cls, url, digest, extname, search_id):
         # save file?
-        item = cls.create(url=url, search_id=search_id, path=path)
+        item = cls.create(url=url, digest=digest, extname=extname, search_id=search_id)
         item.save()
         return item.id
 
     @classmethod
-    def query(cls, keyword):
+    def query_by_keyword(cls, keyword):
         searches = SearchHistory.query(keyword)
         search_ids = [i["id"] for i in searches]
         q = cls.select().where(cls.search_id.in_(search_ids))
-        return [{"url": i.url, "path": i.path, "used": i.used, "create_at": i.create_at} for i in q]
+        return [
+            {"url": i.url, "digest": i.digest, "extname": i.extname, "used": i.used, "create_at": i.create_at}
+            for i in q
+        ]
+
+    @classmethod
+    def query_by_digest(cls, digest):
+        item = cls.get_or_none(cls.digest == digest)
+        if item is None:
+            return item
+        return {
+            "url": item.url,
+            "digest": item.digest,
+            "extname": item.extname,
+            "used": item.used,
+            "create_at": item.create_at,
+        }
 
     @classmethod
     def incr_use(cls, url):
