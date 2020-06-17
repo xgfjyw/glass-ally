@@ -60,7 +60,7 @@ type Path struct {
 	Path      string     `gorm:"type:varchar(512);unique_index"`
 	Ignore    string     `gorm:"type:varchar(128);default:''"`
 	Recursive bool       `gorm:"default:false"`
-	Label     string     `gorm:"type:varchar(128)default:''"`
+	Label     string     `gorm:"type:varchar(128);default:''"`
 	CreatedAt *time.Time `gorm:"default:CURRENT_TIMESTAMP"`
 }
 

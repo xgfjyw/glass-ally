@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"mime"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
 	"github.com/disintegration/imaging"
@@ -50,7 +51,7 @@ func getPicture(ctx *gin.Context) {
 		size = int(i64Size)
 	}
 
-	resources := []Resources{}
+	resources := []ResourceProperty{}
 	db.Find(&resources)
 	n := len(resources)
 	if n == 0 {
@@ -73,9 +74,9 @@ func getPicture(ctx *gin.Context) {
 	// 	return
 	// }
 
-	filename := pic.Digest + "." + pic.Extname
+	filename := pic.FullPath
 	format, _ := imaging.FormatFromFilename(filename)
-	img, _ := imaging.Open("download/" + filename)
+	img, _ := imaging.Open(filename)
 	x, y := img.Bounds().Max.X, img.Bounds().Max.Y
 
 	max := func(x, y int) int {
@@ -98,7 +99,7 @@ func getPicture(ctx *gin.Context) {
 	w := ctx.Writer
 	header := w.Header()
 
-	header.Set("Content-Type", mime.TypeByExtension("."+pic.Extname))
+	header.Set("Content-Type", mime.TypeByExtension(filepath.Ext(filename)))
 	w.WriteHeader(http.StatusOK)
 	w.Write(buffer.Bytes())
 	w.(http.Flusher).Flush()
