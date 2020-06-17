@@ -1,8 +1,0 @@
-peewee
-flask
-PyMySQL
-requests
-
-ratelimit
-
-pillow
