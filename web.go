@@ -11,6 +11,7 @@ import (
 
 	"github.com/disintegration/imaging"
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
 )
 
 func runServer(listenAt string) {
@@ -104,6 +105,14 @@ func getPicture(ctx *gin.Context) {
 
 	header.Set("Content-Type", mime.TypeByExtension(filepath.Ext(filename)))
 	w.WriteHeader(http.StatusOK)
+
+	resource := Resources{}
+	_, downloadFilename := filepath.Split(filename)
+	result := db.Where(&Resources{ID: pic.ResourceID}).First(&resource)
+	if result.Error != gorm.ErrRecordNotFound {
+		downloadFilename = resource.Digest + "." + resource.Extname
+	}
+	w.Header().Set("content-disposition", "attachment; filename=\""+downloadFilename+"\"")
 	w.Write(buffer.Bytes())
 	w.(http.Flusher).Flush()
 }
