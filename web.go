@@ -114,7 +114,7 @@ func getPicture(ctx *gin.Context) {
 	if size != 0 && max(x, y) > size {
 		ratio := float64(max(x, y)) / float64(size)
 		xPixel, yPixel := int(float64(x)/ratio), int(float64(y)/ratio)
-		img = imaging.Resize(img, xPixel, yPixel, imaging.Lanczos)
+		img = imaging.Resize(img, xPixel, yPixel, imaging.CatmullRom)
 	}
 
 	log.Println("4", time.Now())
