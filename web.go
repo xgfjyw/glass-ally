@@ -3,12 +3,14 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"log"
 	"math"
 	"math/rand"
 	"mime"
 	"net/http"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/disintegration/imaging"
 	"github.com/gin-gonic/gin"
@@ -35,6 +37,7 @@ func reload(ctx *gin.Context) {
 }
 
 func getPicture(ctx *gin.Context) {
+	log.Println("1", time.Now())
 	// digest := ctx.Query("id")
 	// if digest == "" {
 	// 	ctx.JSON(401, gin.H{
@@ -76,7 +79,7 @@ func getPicture(ctx *gin.Context) {
 			minUsed = i.Used
 		}
 	}
-	candidate := []ResourceProperty{}
+	candidate := make([]ResourceProperty, len(resources))
 	for _, i := range resources {
 		if i.Used == minUsed {
 			candidate = append(candidate, i)
@@ -86,7 +89,7 @@ func getPicture(ctx *gin.Context) {
 	seq := rand.Intn(len(candidate)-1) + 1
 	pic := resources[seq]
 	db.Model(&ResourceProperty{}).Where(&ResourceProperty{ResourceID: pic.ResourceID}).UpdateColumn("used", gorm.Expr("used+1"))
-
+	log.Println("2", time.Now())
 	// pic := queryResourceByDigest(conn, digest)
 	// if pic == nil {
 	// 	ctx.JSON(404, gin.H{
@@ -133,6 +136,7 @@ func getPicture(ctx *gin.Context) {
 		}
 		w.Header().Set("content-disposition", "attachment; filename=\""+downloadFilename+"\"")
 	}
+	log.Println("3", time.Now())
 	w.Write(buffer.Bytes())
 	w.(http.Flusher).Flush()
 }
