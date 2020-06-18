@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"log"
-	"math"
 	"math/rand"
 	"mime"
 	"net/http"
@@ -63,9 +62,20 @@ func getPicture(ctx *gin.Context) {
 		size = int(i64Size)
 	}
 
-	resources := []ResourceProperty{}
-	db.Find(&resources)
-	if len(resources) == 0 {
+	type Result struct {
+		Path string
+		Name string
+		Ext  string
+	}
+	rows := []Result{}
+	db.Raw(
+		`SELECT full_path as path, resources.digest as name, resources.extname as ext
+		FROM resource_property
+		INNER JOIN resources ON resource_property.resource_id=resources.id
+		WHERE used=(select min(used) from resource_property)`).Scan(&rows)
+
+	n := len(rows)
+	if n == 0 {
 		ctx.JSON(404, gin.H{
 			"code": 404,
 			"msg":  "not found",
@@ -73,23 +83,11 @@ func getPicture(ctx *gin.Context) {
 		return
 	}
 
-	minUsed := uint(math.MaxInt32)
-	for _, i := range resources {
-		if i.Used < minUsed {
-			minUsed = i.Used
-		}
-	}
-	candidate := []ResourceProperty{}
-	for _, i := range resources {
-		if i.Used == minUsed {
-			candidate = append(candidate, i)
-		}
-	}
-
-	seq := rand.Intn(len(candidate)-1) + 1
-	pic := resources[seq]
-	db.Model(&ResourceProperty{}).Where(&ResourceProperty{ResourceID: pic.ResourceID}).UpdateColumn("used", gorm.Expr("used+1"))
 	log.Println("2", time.Now())
+	seq := rand.Intn(len(rows)-1) + 1
+	pic := rows[seq]
+	defer db.Model(&ResourceProperty{}).Where(&ResourceProperty{FullPath: pic.Path}).UpdateColumn("used", gorm.Expr("used+1"))
+	log.Println("3", time.Now())
 	// pic := queryResourceByDigest(conn, digest)
 	// if pic == nil {
 	// 	ctx.JSON(404, gin.H{
@@ -99,9 +97,9 @@ func getPicture(ctx *gin.Context) {
 	// 	return
 	// }
 
-	filename := pic.FullPath
+	filename := pic.Name + "." + pic.Ext
 	format, _ := imaging.FormatFromFilename(filename)
-	img, _ := imaging.Open(filename)
+	img, _ := imaging.Open(pic.Path)
 	x, y := img.Bounds().Max.X, img.Bounds().Max.Y
 
 	max := func(x, y int) int {
@@ -114,12 +112,15 @@ func getPicture(ctx *gin.Context) {
 	if size != 0 && max(x, y) > size {
 		ratio := float64(max(x, y)) / float64(size)
 		xPixel, yPixel := int(float64(x)/ratio), int(float64(y)/ratio)
-		img = imaging.Resize(img, xPixel, yPixel, imaging.Lanczos)
+		img = imaging.Resize(img, xPixel, yPixel, imaging.CatmullRom)
 	}
 
+	log.Println("4", time.Now())
 	buffer := bytes.Buffer{}
 	wr := bufio.NewWriter(&buffer)
 	imaging.Encode(wr, img, format, imaging.JPEGQuality(90))
+
+	log.Println("5", time.Now())
 
 	w := ctx.Writer
 	header := w.Header()
@@ -128,15 +129,8 @@ func getPicture(ctx *gin.Context) {
 	w.WriteHeader(http.StatusOK)
 	if asfile {
 		// add header for download file
-		resource := Resources{}
-		_, downloadFilename := filepath.Split(filename)
-		result := db.Where(&Resources{ID: pic.ResourceID}).First(&resource)
-		if result.Error != gorm.ErrRecordNotFound {
-			downloadFilename = resource.Digest + "." + resource.Extname
-		}
-		w.Header().Set("content-disposition", "attachment; filename=\""+downloadFilename+"\"")
+		w.Header().Set("content-disposition", "attachment; filename=\""+filename+"\"")
 	}
-	log.Println("3", time.Now())
 	w.Write(buffer.Bytes())
 	w.(http.Flusher).Flush()
 }
