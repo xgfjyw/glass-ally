@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -39,6 +40,15 @@ func reloadData() {
 				continue
 			}
 			addResource(filepath, path.ID)
+		}
+	}
+
+	files := []ResourceProperty{}
+	db.Find(&files)
+	for _, item := range files {
+		_, err := os.Stat(item.FullPath)
+		if os.IsNotExist(err) {
+			db.Debug().Unscoped().Delete(&ResourceProperty{FullPath: item.FullPath})
 		}
 	}
 }

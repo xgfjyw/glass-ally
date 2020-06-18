@@ -8,6 +8,7 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+// Resources is uniq picture with sha1
 type Resources struct {
 	ID        uint64     `gorm:"primary_key"`
 	Digest    string     `gorm:"type:varchar(128);unique_index"`
