@@ -45,7 +45,7 @@ func reloadData() {
 
 func resouceExists(fullpath string) bool {
 	count := 0
-	db.Debug().Where(ResourceProperty{FullPath: fullpath}).Count(&count)
+	db.Debug().Where(&ResourceProperty{FullPath: fullpath}).Count(&count)
 	if count > 0 {
 		return true
 	}
@@ -67,22 +67,18 @@ func addResource(fullpath string, pathID uint64) {
 		Extname: extname,
 		Size:    0,
 	}
-	result := db.Where(Resources{
-		Digest:  digest,
-		Extname: extname,
-		Size:    0,
-	}).FirstOrCreate(&resource)
+	result := db.Where(&resource).FirstOrCreate(&resource)
 	if result.Error != nil {
 		log.Println(result.Error)
 		return
 	}
 
-	property := ResourceProperty{}
-	result = db.Where(ResourceProperty{
+	property := ResourceProperty{
 		ResourceID: resource.ID,
 		FullPath:   fullpath,
 		PathID:     pathID,
-	}).FirstOrCreate(&property)
+	}
+	result = db.Where(&property).FirstOrCreate(&property)
 	if result.Error != nil {
 		log.Println(result.Error)
 		return
