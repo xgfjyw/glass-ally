@@ -45,7 +45,7 @@ func reloadData() {
 
 func resouceExists(fullpath string) bool {
 	count := 0
-	db.Debug().Where(&ResourceProperty{FullPath: fullpath}).Count(&count)
+	db.Model(&ResourceProperty{}).Where(&ResourceProperty{FullPath: fullpath}).Count(&count)
 	if count > 0 {
 		return true
 	}
