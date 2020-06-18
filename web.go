@@ -42,6 +42,10 @@ func getPicture(ctx *gin.Context) {
 	// 	})
 	// 	return
 	// }
+	asfile := false
+	if ctx.Query("asfile") == "1" {
+		asfile = true
+	}
 	size, sSize := 0, ctx.Query("size")
 	if sSize != "" {
 		i64Size, err := strconv.ParseInt(sSize, 10, 32)
@@ -105,14 +109,16 @@ func getPicture(ctx *gin.Context) {
 
 	header.Set("Content-Type", mime.TypeByExtension(filepath.Ext(filename)))
 	w.WriteHeader(http.StatusOK)
-
-	resource := Resources{}
-	_, downloadFilename := filepath.Split(filename)
-	result := db.Where(&Resources{ID: pic.ResourceID}).First(&resource)
-	if result.Error != gorm.ErrRecordNotFound {
-		downloadFilename = resource.Digest + "." + resource.Extname
+	if asfile {
+		// add header for download file
+		resource := Resources{}
+		_, downloadFilename := filepath.Split(filename)
+		result := db.Where(&Resources{ID: pic.ResourceID}).First(&resource)
+		if result.Error != gorm.ErrRecordNotFound {
+			downloadFilename = resource.Digest + "." + resource.Extname
+		}
+		w.Header().Set("content-disposition", "attachment; filename=\""+downloadFilename+"\"")
 	}
-	w.Header().Set("content-disposition", "attachment; filename=\""+downloadFilename+"\"")
 	w.Write(buffer.Bytes())
 	w.(http.Flusher).Flush()
 }
