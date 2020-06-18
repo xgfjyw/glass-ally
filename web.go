@@ -119,7 +119,7 @@ func getPicture(ctx *gin.Context) {
 
 	buffer := bytes.Buffer{}
 	wr := bufio.NewWriter(&buffer)
-	imaging.Encode(wr, img, format)
+	imaging.Encode(wr, img, format, imaging.JPEGQuality(90))
 
 	w := ctx.Writer
 	header := w.Header()
