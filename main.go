@@ -16,6 +16,9 @@ var (
 )
 
 func reloadData() {
+	log.Println("reload ...")
+	defer log.Println("reload finish")
+
 	paths := []Path{}
 	db.Find(&paths)
 	for _, path := range paths {
