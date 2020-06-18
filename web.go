@@ -79,7 +79,7 @@ func getPicture(ctx *gin.Context) {
 			minUsed = i.Used
 		}
 	}
-	candidate := make([]ResourceProperty, len(resources))
+	candidate := []ResourceProperty{}
 	for _, i := range resources {
 		if i.Used == minUsed {
 			candidate = append(candidate, i)
