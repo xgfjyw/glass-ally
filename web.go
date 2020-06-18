@@ -72,7 +72,9 @@ func getPicture(ctx *gin.Context) {
 		`SELECT full_path as path, resources.digest as name, resources.extname as ext
 		FROM resource_property
 		INNER JOIN resources ON resource_property.resource_id=resources.id
-		WHERE used=(select min(used) from resource_property)`).Scan(&rows)
+		WHERE used=(select min(used) from resource_property)
+		ORDER BY resources.digest
+		LIMIT 100`).Scan(&rows)
 
 	n := len(rows)
 	if n == 0 {
