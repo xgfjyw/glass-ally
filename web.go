@@ -85,7 +85,7 @@ func getPicture(ctx *gin.Context) {
 
 	seq := rand.Intn(len(candidate)-1) + 1
 	pic := resources[seq]
-	db.Model(&pic).UpdateColumn("used", gorm.Expr("used+1"))
+	db.Where(&ResourceProperty{ResourceID: pic.ResourceID}).UpdateColumn("used", gorm.Expr("used+1"))
 
 	// pic := queryResourceByDigest(conn, digest)
 	// if pic == nil {
