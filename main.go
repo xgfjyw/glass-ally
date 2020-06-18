@@ -45,10 +45,21 @@ func reloadData() {
 
 	files := []ResourceProperty{}
 	db.Find(&files)
+	resourceIDs := make(map[uint64]bool)
 	for _, item := range files {
 		_, err := os.Stat(item.FullPath)
 		if os.IsNotExist(err) {
 			db.Debug().Unscoped().Delete(&ResourceProperty{FullPath: item.FullPath})
+			continue
+		}
+		resourceIDs[item.ResourceID] = true
+	}
+
+	pics := []Resources{}
+	db.Find(&pics)
+	for _, pic := range pics {
+		if _, exists := resourceIDs[pic.ID]; !exists {
+			db.Debug().Unscoped().Delete(&Resources{ID: pic.ID})
 		}
 	}
 }

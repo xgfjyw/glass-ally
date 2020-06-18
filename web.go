@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"math"
 	"math/rand"
 	"mime"
 	"net/http"
@@ -61,8 +62,7 @@ func getPicture(ctx *gin.Context) {
 
 	resources := []ResourceProperty{}
 	db.Find(&resources)
-	n := len(resources)
-	if n == 0 {
+	if len(resources) == 0 {
 		ctx.JSON(404, gin.H{
 			"code": 404,
 			"msg":  "not found",
@@ -70,8 +70,22 @@ func getPicture(ctx *gin.Context) {
 		return
 	}
 
-	seq := rand.Intn(n-1) + 1
+	minUsed := uint(math.MaxInt32)
+	for _, i := range resources {
+		if i.Used < minUsed {
+			minUsed = i.Used
+		}
+	}
+	candidate := []ResourceProperty{}
+	for _, i := range resources {
+		if i.Used == minUsed {
+			candidate = append(candidate, i)
+		}
+	}
+
+	seq := rand.Intn(len(candidate)-1) + 1
 	pic := resources[seq]
+	db.Model(&pic).UpdateColumn("used", gorm.Expr("used+1"))
 
 	// pic := queryResourceByDigest(conn, digest)
 	// if pic == nil {
