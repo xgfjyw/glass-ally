@@ -10,9 +10,7 @@ import (
 )
 
 var (
-	db  *gorm.DB
-	cx  string
-	key string
+	db *gorm.DB
 )
 
 func reloadData() {
@@ -37,7 +35,6 @@ func reloadData() {
 		})
 
 		for _, filepath := range files {
-			log.Println(filepath)
 			if resouceExists(filepath) {
 				continue
 			}
@@ -91,32 +88,12 @@ func addResource(fullpath string, pathID uint64) {
 
 func main() {
 	config := initConfig()
-	cx = config.Cx
-	key = config.Key
-	// listenAddr := "127.0.0.1:8081"
-	// if config.Addr != "" {
-	// 	listenAddr = config.Addr
-	// }
 
-	dsn := config.Dsn + "?parseTime=true"
-	s := strings.Split(dsn, "://")
-	conn, err := gorm.Open(s[0], s[1])
-	if err != nil {
-		log.Println(err)
+	db = initDB(config.Dsn)
+	if db == nil {
 		return
 	}
-	db = conn
 	defer db.Close()
-	if !db.HasTable(&Path{}) {
-		db.CreateTable(&Path{})
-	}
-	if !db.HasTable(&Resources{}) {
-		db.CreateTable(&Resources{})
-	}
-	if !db.HasTable(&ResourceProperty{}) {
-		db.CreateTable(&ResourceProperty{})
-	}
-	db.AutoMigrate(&Path{}, &Resources{}, &ResourceProperty{})
 
 	go reloadData()
 

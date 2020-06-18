@@ -15,6 +15,9 @@ import (
 
 func runServer(listenAt string) {
 	r := gin.Default()
+
+	r.Use(MaxAllowed(3))
+
 	// r.POST("/s", query)
 	r.GET("/admin/reload", reload)
 	r.GET("/pic", getPicture)
