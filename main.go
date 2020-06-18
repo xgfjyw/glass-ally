@@ -45,7 +45,7 @@ func reloadData() {
 
 func resouceExists(fullpath string) bool {
 	count := 0
-	db.Where(ResourceProperty{FullPath: fullpath}).Count(&count)
+	db.Debug().Where(ResourceProperty{FullPath: fullpath}).Count(&count)
 	if count > 0 {
 		return true
 	}
@@ -119,7 +119,7 @@ func main() {
 	}
 	db.AutoMigrate(&Path{}, &Resources{}, &ResourceProperty{})
 
-	reloadData()
+	go reloadData()
 
 	listenAddr := "127.0.0.1:8081"
 	if config.Addr != "" {
