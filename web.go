@@ -4,10 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"log"
+	"math"
 	"math/rand"
-	"mime"
 	"net/http"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -49,9 +48,9 @@ func getPicture(ctx *gin.Context) {
 	if ctx.Query("asfile") == "1" {
 		asfile = true
 	}
-	size, sSize := 0, ctx.Query("size")
-	if sSize != "" {
-		i64Size, err := strconv.ParseInt(sSize, 10, 32)
+	resolution, sResolution := 0, ctx.Query("size")
+	if sResolution != "" {
+		i64Resolution, err := strconv.ParseInt(sResolution, 10, 32)
 		if err != nil {
 			ctx.JSON(401, gin.H{
 				"code": 401,
@@ -59,7 +58,7 @@ func getPicture(ctx *gin.Context) {
 			})
 			return
 		}
-		size = int(i64Size)
+		resolution = int(i64Resolution)
 	}
 
 	type Result struct {
@@ -86,23 +85,19 @@ func getPicture(ctx *gin.Context) {
 	}
 
 	log.Println("2", time.Now())
-	seq := rand.Intn(len(rows)-1) + 1
+	seq := rand.Intn(n) + 1
 	pic := rows[seq]
 	defer db.Model(&ResourceProperty{}).Where(&ResourceProperty{FullPath: pic.Path}).UpdateColumn("used", gorm.Expr("used+1"))
 	log.Println("3", time.Now())
-	// pic := queryResourceByDigest(conn, digest)
-	// if pic == nil {
-	// 	ctx.JSON(404, gin.H{
-	// 		"code": 404,
-	// 		"msg":  "not found",
-	// 	})
-	// 	return
-	// }
 
-	filename := pic.Name + "." + pic.Ext
-	format, _ := imaging.FormatFromFilename(filename)
-	img, _ := imaging.Open(pic.Path)
-	x, y := img.Bounds().Max.X, img.Bounds().Max.Y
+	img, err := imaging.Open(pic.Path)
+	if err != nil {
+		ctx.JSON(500, gin.H{
+			"code": 500,
+			"msg":  err.Error(),
+		})
+		return
+	}
 
 	max := func(x, y int) int {
 		if x > y {
@@ -110,27 +105,50 @@ func getPicture(ctx *gin.Context) {
 		}
 		return y
 	}
-
-	if size != 0 && max(x, y) > size {
-		ratio := float64(max(x, y)) / float64(size)
+	x, y := img.Bounds().Max.X, img.Bounds().Max.Y
+	if resolution != 0 && max(x, y) > resolution {
+		ratio := float64(max(x, y)) / float64(resolution)
 		xPixel, yPixel := int(float64(x)/ratio), int(float64(y)/ratio)
 		img = imaging.Resize(img, xPixel, yPixel, imaging.CatmullRom)
 	}
 
 	log.Println("4", time.Now())
-	buffer := bytes.Buffer{}
-	wr := bufio.NewWriter(&buffer)
-	imaging.Encode(wr, img, format, imaging.JPEGQuality(90))
+
+	expectedSize, minQuaity := 1024*168, 62
+	buffer, quality := bytes.Buffer{}, 93
+	for {
+		wr := bufio.NewWriter(&buffer)
+		imaging.Encode(wr, img, imaging.JPEG, imaging.JPEGQuality(quality))
+
+		size := buffer.Len()
+		if size <= expectedSize || quality <= minQuaity {
+			break
+		}
+
+		delta := int(math.Pow(4.0*float64(size)/float64(expectedSize), 1.3))
+		switch {
+		case delta > 15:
+			delta = 15
+		case delta < 5:
+			delta = 5
+		}
+		quality -= delta
+		if quality < minQuaity {
+			quality = minQuaity
+		}
+		buffer.Reset()
+	}
 
 	log.Println("5", time.Now())
 
 	w := ctx.Writer
 	header := w.Header()
 
-	header.Set("Content-Type", mime.TypeByExtension(filepath.Ext(filename)))
+	header.Set("Content-Type", "image/jpeg")
 	w.WriteHeader(http.StatusOK)
 	if asfile {
 		// add header for download file
+		filename := pic.Name + "." + pic.Ext
 		w.Header().Set("content-disposition", "attachment; filename=\""+filename+"\"")
 	}
 	w.Write(buffer.Bytes())
