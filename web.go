@@ -87,7 +87,7 @@ func getPicture(ctx *gin.Context) {
 	seq := rand.Intn(n) + 1
 	pic := rows[seq]
 	defer db.Model(&ResourceProperty{}).Where(&ResourceProperty{FullPath: pic.Path}).UpdateColumn("used", gorm.Expr("used+1"))
-	log.Println("db", time.Now().Sub(start).Microseconds(), "ms")
+	log.Println("db", time.Now().Sub(start).Microseconds()/1000, "ms")
 
 	img, err := imaging.Open(pic.Path)
 	if err != nil {
@@ -111,7 +111,7 @@ func getPicture(ctx *gin.Context) {
 		img = imaging.Resize(img, xPixel, yPixel, imaging.CatmullRom)
 	}
 
-	log.Println("open + resize", time.Now().Sub(start).Microseconds(), "ms")
+	log.Println("open + resize", time.Now().Sub(start).Microseconds()/1000, "ms")
 
 	expectedSize, minQuaity := 1024*168, 62
 	buffer, quality := bytes.Buffer{}, 93
@@ -138,7 +138,7 @@ func getPicture(ctx *gin.Context) {
 		buffer.Reset()
 	}
 
-	log.Println("encode", time.Now().Sub(start).Microseconds(), "ms")
+	log.Println("encode", time.Now().Sub(start).Microseconds()/1000, "ms")
 
 	w := ctx.Writer
 	header := w.Header()
