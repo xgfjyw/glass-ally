@@ -35,7 +35,7 @@ func reload(ctx *gin.Context) {
 }
 
 func getPicture(ctx *gin.Context) {
-	log.Println("1", time.Now())
+	start := time.Now()
 	// digest := ctx.Query("id")
 	// if digest == "" {
 	// 	ctx.JSON(401, gin.H{
@@ -84,11 +84,10 @@ func getPicture(ctx *gin.Context) {
 		return
 	}
 
-	log.Println("2", time.Now())
 	seq := rand.Intn(n) + 1
 	pic := rows[seq]
 	defer db.Model(&ResourceProperty{}).Where(&ResourceProperty{FullPath: pic.Path}).UpdateColumn("used", gorm.Expr("used+1"))
-	log.Println("3", time.Now())
+	log.Println("db", time.Now().Sub(start).Microseconds(), "ms")
 
 	img, err := imaging.Open(pic.Path)
 	if err != nil {
@@ -112,7 +111,7 @@ func getPicture(ctx *gin.Context) {
 		img = imaging.Resize(img, xPixel, yPixel, imaging.CatmullRom)
 	}
 
-	log.Println("4", time.Now())
+	log.Println("open + resize", time.Now().Sub(start).Microseconds(), "ms")
 
 	expectedSize, minQuaity := 1024*168, 62
 	buffer, quality := bytes.Buffer{}, 93
@@ -139,7 +138,7 @@ func getPicture(ctx *gin.Context) {
 		buffer.Reset()
 	}
 
-	log.Println("5", time.Now())
+	log.Println("encode", time.Now().Sub(start).Microseconds(), "ms")
 
 	w := ctx.Writer
 	header := w.Header()
