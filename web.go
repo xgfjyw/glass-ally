@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -22,6 +23,7 @@ func runServer(listenAt string) {
 
 	// r.POST("/s", query)
 	r.GET("/admin/reload", reload)
+	r.GET("/admin/add", addPath)
 	r.GET("/pic", getPicture)
 	r.Run(listenAt)
 }
@@ -32,6 +34,32 @@ func reload(ctx *gin.Context) {
 		"code": 0,
 		"msg":  "ok",
 	})
+}
+
+func addPath(ctx *gin.Context) {
+	ctx.JSON(200, gin.H{
+		"code": 0,
+		"msg":  "ok",
+	})
+
+	path := ctx.Query("p")
+	if path == "" {
+		return
+	}
+	info, err := os.Stat(path)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	if !info.IsDir() {
+		log.Println("is not dir")
+		return
+	}
+	item := Path{Path: path}
+	result := db.Where(&item).FirstOrCreate(&item)
+	if result.Error != nil {
+		log.Println(result.Error)
+	}
 }
 
 func getPicture(ctx *gin.Context) {
@@ -84,7 +112,10 @@ func getPicture(ctx *gin.Context) {
 		return
 	}
 
-	seq := rand.Intn(n) + 1
+	seq := rand.Intn(n)
+	if seq >= n {
+		seq = n - 1
+	}
 	pic := rows[seq]
 	defer db.Model(&ResourceProperty{}).Where(&ResourceProperty{FullPath: pic.Path}).UpdateColumn("used", gorm.Expr("used+1"))
 	log.Println("db", time.Now().Sub(start).Microseconds()/1000, "ms")
